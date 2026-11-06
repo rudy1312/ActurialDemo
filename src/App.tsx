@@ -253,7 +253,7 @@ export default function App() {
             {services.map((service, index) => (
               <Reveal
                 className="service-row"
-                delay={index * 110}
+                delay={180 + index * 110}
                 key={service.title}
                 ready={isPageReady}
                 scrollUp
@@ -285,7 +285,7 @@ export default function App() {
           </p>
         </Reveal>
 
-        <Reveal className="form-wrap" delay={80} ready={isPageReady}>
+        <Reveal className="form-wrap" delay={220} ready={isPageReady}>
           {submitted ? (
             <div className="success-panel" role="status" aria-live="polite">
               <p className="eyebrow gold">ENQUIRY RECEIVED</p>

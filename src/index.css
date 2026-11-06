@@ -739,8 +739,8 @@ footer .footer-copy {
   opacity: 0;
   transform: translate3d(var(--reveal-direction, -18px), 0, 0);
   transition:
-    opacity 640ms var(--motion-ease-premium) var(--reveal-delay),
-    transform 960ms var(--motion-ease-premium) var(--reveal-delay);
+    opacity 820ms var(--motion-ease-premium) var(--reveal-delay),
+    transform 1280ms var(--motion-ease-premium) var(--reveal-delay);
   will-change: opacity, transform;
 }
 
@@ -754,8 +754,8 @@ footer .footer-copy {
   opacity: 0;
   transform: translate3d(18px, 0, 0);
   transition:
-    opacity 640ms var(--motion-ease-premium) 220ms,
-    transform 960ms var(--motion-ease-premium) 220ms;
+    opacity 820ms var(--motion-ease-premium) 220ms,
+    transform 1280ms var(--motion-ease-premium) 220ms;
 }
 
 .reveal.is-visible {
