@@ -151,6 +151,15 @@ function useTypewriter<T extends HTMLElement>(
     if (!isPageReady) return;
 
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const networkInformation = (
+      navigator as Navigator & {
+        connection?: { effectiveType?: string; saveData?: boolean };
+      }
+    ).connection;
+    const isConstrainedDevice =
+      navigator.hardwareConcurrency <= 2 ||
+      networkInformation?.saveData === true ||
+      /^(slow-2g|2g)$/.test(networkInformation?.effectiveType ?? "");
     let timer: number | undefined;
     let hasStarted = false;
 
@@ -160,7 +169,7 @@ function useTypewriter<T extends HTMLElement>(
       setIsComplete(true);
     };
 
-    if (motionPreference.matches) {
+    if (motionPreference.matches || isConstrainedDevice) {
       showFullText();
       return;
     }
