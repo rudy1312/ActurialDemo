@@ -54,11 +54,13 @@ function Reveal({
   className = "",
   delay = 0,
   scrollUp = false,
+  ready = true,
 }: {
   children: React.ReactNode;
   className?: string;
   delay?: number;
   scrollUp?: boolean;
+  ready?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -99,7 +101,7 @@ function Reveal({
     );
     observer.observe(element);
     return () => observer.disconnect();
-  }, [scrollUp]);
+  }, [ready, scrollUp]);
 
   return (
     <div
@@ -133,160 +135,6 @@ function ActionButton({
       <span>{children}</span>
       <img src={arrowSrc} alt="" />
     </button>
-  );
-}
-
-function useTypewriter<T extends HTMLElement>(
-  fullText: string,
-  startDelay = 340,
-  isPageReady = true,
-) {
-  const ref = useRef<T>(null);
-  const [visibleLength, setVisibleLength] = useState(0);
-  const [isComplete, setIsComplete] = useState(false);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    if (!isPageReady) return;
-
-    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const networkInformation = (
-      navigator as Navigator & {
-        connection?: { effectiveType?: string; saveData?: boolean };
-      }
-    ).connection;
-    const isConstrainedDevice =
-      navigator.hardwareConcurrency <= 2 ||
-      networkInformation?.saveData === true ||
-      /^(slow-2g|2g)$/.test(networkInformation?.effectiveType ?? "");
-    let timer: number | undefined;
-    let hasStarted = false;
-
-    const showFullText = () => {
-      if (timer !== undefined) window.clearTimeout(timer);
-      setVisibleLength(fullText.length);
-      setIsComplete(true);
-    };
-
-    if (motionPreference.matches || isConstrainedDevice) {
-      showFullText();
-      return;
-    }
-
-    const typeNextCharacter = (index: number) => {
-      if (index >= fullText.length) {
-        setIsComplete(true);
-        return;
-      }
-
-      const character = fullText[index];
-      setVisibleLength(index + 1);
-
-      const delay = /[.!?]/.test(character)
-        ? 360
-        : /[,;:]/.test(character)
-          ? 200
-          : character === " "
-            ? 30
-            : 56;
-
-      timer = window.setTimeout(() => typeNextCharacter(index + 1), delay);
-    };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting || hasStarted) return;
-
-        hasStarted = true;
-        observer.unobserve(element);
-        timer = window.setTimeout(() => typeNextCharacter(0), startDelay);
-      },
-      {
-        rootMargin: "0px 0px -8% 0px",
-        threshold: 0.01,
-      },
-    );
-
-    const handleMotionPreference = (event: MediaQueryListEvent) => {
-      if (event.matches) {
-        observer.disconnect();
-        showFullText();
-      }
-    };
-
-    observer.observe(element);
-    motionPreference.addEventListener("change", handleMotionPreference);
-
-    return () => {
-      observer.disconnect();
-      if (timer !== undefined) window.clearTimeout(timer);
-      motionPreference.removeEventListener("change", handleMotionPreference);
-    };
-  }, [fullText, isPageReady, startDelay]);
-
-  return { ref, visibleLength, isComplete };
-}
-
-function HeroTypewriterHeading({ isPageReady }: { isPageReady: boolean }) {
-  const { ref, visibleLength, isComplete } = useTypewriter<HTMLHeadingElement>(
-    heroText,
-    240,
-    isPageReady,
-  );
-
-  const visiblePrefix = heroPrefix.slice(0, Math.min(visibleLength, heroPrefix.length));
-  const visibleEmphasis =
-    visibleLength > heroPrefix.length
-      ? heroEmphasis.slice(0, Math.min(visibleLength - heroPrefix.length, heroEmphasis.length))
-      : "";
-  const visibleSuffix =
-    visibleLength > heroPrefix.length + heroEmphasis.length
-      ? heroSuffix.slice(0, visibleLength - heroPrefix.length - heroEmphasis.length)
-      : "";
-
-  return (
-    <h1
-      ref={ref}
-      className={`typewriter hero-typewriter${isComplete ? " is-complete" : ""}`}
-      aria-label={heroText}
-    >
-      <span className="typewriter-reserve" aria-hidden="true">
-        {heroPrefix}
-        <em>{heroEmphasis}</em>
-        {heroSuffix}
-      </span>
-      <span className="typewriter-output" aria-hidden="true">
-        {visiblePrefix}
-        {visibleEmphasis ? <em>{visibleEmphasis}</em> : null}
-        {visibleSuffix}
-        <span className="typewriter-caret" />
-      </span>
-    </h1>
-  );
-}
-
-function TypewriterText({ isPageReady }: { isPageReady: boolean }) {
-  const { ref, visibleLength, isComplete } = useTypewriter<HTMLQuoteElement>(
-    approachText,
-    360,
-    isPageReady,
-  );
-
-  return (
-    <blockquote
-      ref={ref}
-      className={`typewriter${isComplete ? " is-complete" : ""}`}
-      aria-label={approachText}
-    >
-      <span className="typewriter-reserve" aria-hidden="true">
-        {approachText}
-      </span>
-      <span className="typewriter-output" aria-hidden="true">
-        {approachText.slice(0, visibleLength)}
-        <span className="typewriter-caret" />
-      </span>
-    </blockquote>
   );
 }
 
@@ -367,10 +215,14 @@ export default function App() {
 
         <div className="rule" />
 
-        <div className="hero">
+        <Reveal className="hero" ready={isPageReady}>
           <p className="eyebrow gold">AUDIT, TAX &amp; ADVISORY</p>
           <div className="hero-grid">
-            <HeroTypewriterHeading isPageReady={isPageReady} />
+            <h1 aria-label={heroText}>
+              {heroPrefix}
+              <em>{heroEmphasis}</em>
+              {heroSuffix}
+            </h1>
             <div className="hero-detail">
               <p>
                 A partner-led practice for founders, families and growing businesses, handling your
@@ -382,24 +234,30 @@ export default function App() {
               </a>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       <section className="services-section page-padding" id="services">
         <div className="rule" />
         <div className="split-layout services-layout">
-          <div className="section-intro">
+          <Reveal className="section-intro" ready={isPageReady}>
             <p className="eyebrow">OUR SERVICES</p>
             <h2>Everything your books need, in one place.</h2>
             <p className="supporting-copy">
               Clear scope, fixed timelines and one point of contact from start to finish.
             </p>
-          </div>
+          </Reveal>
 
           <div className="service-list">
             <div className="mobile-rule rule" />
             {services.map((service, index) => (
-              <Reveal className="service-row" delay={index * 110} key={service.title} scrollUp>
+              <Reveal
+                className="service-row"
+                delay={index * 110}
+                key={service.title}
+                ready={isPageReady}
+                scrollUp
+              >
                 <span className="service-number">{String(index + 1).padStart(2, "0")}</span>
                 <div>
                   <h3>{service.title}</h3>
@@ -412,14 +270,14 @@ export default function App() {
       </section>
 
       <section className="approach-section page-padding" id="approach">
-        <Reveal className="approach-grid">
+        <Reveal className="approach-grid" ready={isPageReady}>
           <p className="eyebrow">OUR APPROACH</p>
-          <TypewriterText isPageReady={isPageReady} />
+          <blockquote aria-label={approachText}>{approachText}</blockquote>
         </Reveal>
       </section>
 
       <section className="enquiry-section page-padding" id="enquire">
-        <Reveal className="section-intro">
+        <Reveal className="section-intro" ready={isPageReady}>
           <p className="eyebrow">GET IN TOUCH</p>
           <h2>Let’s talk about your books.</h2>
           <p className="supporting-copy">
@@ -427,7 +285,7 @@ export default function App() {
           </p>
         </Reveal>
 
-        <Reveal className="form-wrap" delay={80}>
+        <Reveal className="form-wrap" delay={80} ready={isPageReady}>
           {submitted ? (
             <div className="success-panel" role="status" aria-live="polite">
               <p className="eyebrow gold">ENQUIRY RECEIVED</p>
@@ -504,3 +362,4 @@ export default function App() {
     </main>
   );
 }
+
