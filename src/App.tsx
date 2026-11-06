@@ -136,7 +136,11 @@ function ActionButton({
   );
 }
 
-function useTypewriter<T extends HTMLElement>(fullText: string, startDelay = 340) {
+function useTypewriter<T extends HTMLElement>(
+  fullText: string,
+  startDelay = 340,
+  isPageReady = true,
+) {
   const ref = useRef<T>(null);
   const [visibleLength, setVisibleLength] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -144,6 +148,7 @@ function useTypewriter<T extends HTMLElement>(fullText: string, startDelay = 340
   useEffect(() => {
     const element = ref.current;
     if (!element) return;
+    if (!isPageReady) return;
 
     const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
     let timer: number | undefined;
@@ -209,13 +214,17 @@ function useTypewriter<T extends HTMLElement>(fullText: string, startDelay = 340
       if (timer !== undefined) window.clearTimeout(timer);
       motionPreference.removeEventListener("change", handleMotionPreference);
     };
-  }, [fullText, startDelay]);
+  }, [fullText, isPageReady, startDelay]);
 
   return { ref, visibleLength, isComplete };
 }
 
-function HeroTypewriterHeading() {
-  const { ref, visibleLength, isComplete } = useTypewriter<HTMLHeadingElement>(heroText, 240);
+function HeroTypewriterHeading({ isPageReady }: { isPageReady: boolean }) {
+  const { ref, visibleLength, isComplete } = useTypewriter<HTMLHeadingElement>(
+    heroText,
+    240,
+    isPageReady,
+  );
 
   const visiblePrefix = heroPrefix.slice(0, Math.min(visibleLength, heroPrefix.length));
   const visibleEmphasis =
@@ -248,8 +257,12 @@ function HeroTypewriterHeading() {
   );
 }
 
-function TypewriterText() {
-  const { ref, visibleLength, isComplete } = useTypewriter<HTMLQuoteElement>(approachText, 360);
+function TypewriterText({ isPageReady }: { isPageReady: boolean }) {
+  const { ref, visibleLength, isComplete } = useTypewriter<HTMLQuoteElement>(
+    approachText,
+    360,
+    isPageReady,
+  );
 
   return (
     <blockquote
@@ -271,6 +284,18 @@ function TypewriterText() {
 export default function App() {
   const [submitted, setSubmitted] = useState(false);
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [isPageReady, setIsPageReady] = useState(false);
+
+  useEffect(() => {
+    if (document.readyState === "complete") {
+      setIsPageReady(true);
+      return;
+    }
+
+    const handlePageLoad = () => setIsPageReady(true);
+    window.addEventListener("load", handlePageLoad, { once: true });
+    return () => window.removeEventListener("load", handlePageLoad);
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -336,7 +361,7 @@ export default function App() {
         <div className="hero">
           <p className="eyebrow gold">AUDIT, TAX &amp; ADVISORY</p>
           <div className="hero-grid">
-            <HeroTypewriterHeading />
+            <HeroTypewriterHeading isPageReady={isPageReady} />
             <div className="hero-detail">
               <p>
                 A partner-led practice for founders, families and growing businesses, handling your
@@ -380,7 +405,7 @@ export default function App() {
       <section className="approach-section page-padding" id="approach">
         <Reveal className="approach-grid">
           <p className="eyebrow">OUR APPROACH</p>
-          <TypewriterText />
+          <TypewriterText isPageReady={isPageReady} />
         </Reveal>
       </section>
 
