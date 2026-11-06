@@ -1,0 +1,11 @@
+{
+  "title": "DemoDesign",
+  "description": "Explore a polished, responsive design demo that showcases mobile and desktop layouts with smooth animations and subtle interactive details.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
