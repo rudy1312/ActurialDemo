@@ -66,7 +66,7 @@ function Reveal({
 
   useEffect(() => {
     const element = ref.current;
-    if (!element) return;
+    if (!element || !ready) return;
 
     if (!scrollUp) {
       const observer = new IntersectionObserver(
@@ -142,6 +142,20 @@ export default function App() {
   const [submitted, setSubmitted] = useState(false);
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [isPageReady, setIsPageReady] = useState(false);
+  const [sequenceStage, setSequenceStage] = useState(1);
+
+  useEffect(() => {
+    if (!isPageReady) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setSequenceStage(4);
+      return;
+    }
+
+    const stageTimers = [1, 2, 3].map((stage) =>
+      window.setTimeout(() => setSequenceStage(stage + 1), stage * 1000),
+    );
+    return () => stageTimers.forEach((timer) => window.clearTimeout(timer));
+  }, [isPageReady]);
 
   useEffect(() => {
     if (document.readyState === "complete") {
@@ -215,7 +229,7 @@ export default function App() {
 
         <div className="rule" />
 
-        <Reveal className="hero" ready={isPageReady}>
+        <Reveal className="hero" ready={isPageReady && sequenceStage >= 1}>
           <p className="eyebrow gold">AUDIT, TAX &amp; ADVISORY</p>
           <div className="hero-grid">
             <h1 aria-label={heroText}>
@@ -240,7 +254,7 @@ export default function App() {
       <section className="services-section page-padding" id="services">
         <div className="rule" />
         <div className="split-layout services-layout">
-          <Reveal className="section-intro" ready={isPageReady}>
+          <Reveal className="section-intro" ready={isPageReady && sequenceStage >= 2}>
             <p className="eyebrow">OUR SERVICES</p>
             <h2>Everything your books need, in one place.</h2>
             <p className="supporting-copy">
@@ -255,7 +269,7 @@ export default function App() {
                 className="service-row"
                 delay={180 + index * 110}
                 key={service.title}
-                ready={isPageReady}
+                ready={isPageReady && sequenceStage >= 2}
                 scrollUp
               >
                 <span className="service-number">{String(index + 1).padStart(2, "0")}</span>
@@ -270,14 +284,14 @@ export default function App() {
       </section>
 
       <section className="approach-section page-padding" id="approach">
-        <Reveal className="approach-grid" ready={isPageReady}>
+        <Reveal className="approach-grid" ready={isPageReady && sequenceStage >= 3}>
           <p className="eyebrow">OUR APPROACH</p>
           <blockquote aria-label={approachText}>{approachText}</blockquote>
         </Reveal>
       </section>
 
       <section className="enquiry-section page-padding" id="enquire">
-        <Reveal className="section-intro" ready={isPageReady}>
+        <Reveal className="section-intro" ready={isPageReady && sequenceStage >= 4}>
           <p className="eyebrow">GET IN TOUCH</p>
           <h2>Let’s talk about your books.</h2>
           <p className="supporting-copy">
@@ -285,7 +299,7 @@ export default function App() {
           </p>
         </Reveal>
 
-        <Reveal className="form-wrap" delay={220} ready={isPageReady}>
+        <Reveal className="form-wrap" delay={220} ready={isPageReady && sequenceStage >= 4}>
           {submitted ? (
             <div className="success-panel" role="status" aria-live="polite">
               <p className="eyebrow gold">ENQUIRY RECEIVED</p>
@@ -298,17 +312,17 @@ export default function App() {
           ) : (
             <form onSubmit={handleSubmit}>
               <div className="personal-fields">
-                <label>
+                <label className="form-field-reveal">
                   <span>Name</span>
                   <input name="name" type="text" placeholder="Your name" required />
                 </label>
-                <label>
+                <label className="form-field-reveal">
                   <span>Email</span>
                   <input name="email" type="email" placeholder="you@company.com" required />
                 </label>
               </div>
 
-              <label>
+              <label className="form-field-reveal">
                 <span>Service needed</span>
                 <span className="select-wrap">
                   <select name="service" defaultValue="" required>
@@ -325,12 +339,12 @@ export default function App() {
                 </span>
               </label>
 
-              <label>
+              <label className="form-field-reveal">
                 <span>Message</span>
                 <textarea name="message" placeholder="A line or two is plenty" required />
               </label>
 
-              <div className="form-submit">
+              <div className="form-submit form-field-reveal">
                 <ActionButton arrowSrc={arrow} type="submit">
                   Request a callback
                 </ActionButton>
